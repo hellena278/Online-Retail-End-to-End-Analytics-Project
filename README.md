@@ -1,4 +1,4 @@
-# Online Retail End-to-End Analytics Project
+# Online Retail II: End-to-End Analytics Project
 
 **SQL · Python · Power BI**
 
@@ -12,6 +12,8 @@ I took 1M+ rows of raw UK online-retail transactions and built the whole pipelin
 - Designed a four-page, accessible dashboard and wrote down the business findings.
 
 ## Dashboard
+
+> Add your final screenshots to `images/` with these names.
 
 | | |
 |---|---|
@@ -46,6 +48,14 @@ flowchart LR
     H --> I["Power BI model and DAX"]
     I --> J["Four-page dashboard"]
 ```
+
+## Where to look
+
+| Time | Look at |
+|---|---|
+| 30 seconds | This page: results and screenshots |
+| 5 minutes | `sql/03_clean_and_prepare.sql` and `sql/05_analysis_queries.sql` |
+| 15 minutes | `docs/`: the cleaning log, the full step-by-step guide and lessons learned |
 
 ## Skills shown
 
@@ -118,4 +128,4 @@ python python/02_export_master_final.py
 
 ## Author
 
-**Nur Hidayah** ·
+**[Your name]** · [LinkedIn](https://www.linkedin.com/) · [Portfolio](https://)

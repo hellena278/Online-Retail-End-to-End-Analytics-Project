@@ -1,0 +1,84 @@
+// ===========================================================
+// Power BI model for the Online Retail II dashboard
+// Table: retail  (the master_final_cleaned.csv query, renamed)
+// ===========================================================
+
+// ---------- Calculated columns (retail table) ----------
+Customer Type = IF(retail[has_customer] = 1, "Registered", "Guest")
+Day Type      = IF(retail[is_weekend] = 1, "Weekend", "Weekday")
+Day           = LEFT(retail[day_of_week], 3)            // sort by day_num
+Quarter Label = "Q" & retail[invoice_quarter]
+
+// ---------- Product table (one name per stock code) ----------
+// Some stock codes have more than one description, so build a clean lookup.
+// Use the MOST COMMON description of sales rows. (MAX picks the alphabetically
+// last one, which gives junk names like "WONKY BOTTOM/BROKEN".)
+// New table:
+ProductNames =
+ADDCOLUMNS(
+    VALUES(retail[stock_code]),
+    "Name",
+        CALCULATE(
+            MAXX(
+                TOPN(
+                    1,
+                    VALUES(retail[description]),
+                    CALCULATE(COUNTROWS(retail), retail[row_type] = "sale"), DESC,
+                    retail[description], ASC
+                ),
+                retail[description]
+            )
+        )
+)
+// New column on ProductNames:
+Product = ProductNames[stock_code] & " - " & ProductNames[Name]
+// Model view: relate ProductNames[stock_code] (one) to retail[stock_code] (many)
+
+// ---------- Measures: sales ----------
+Sales Revenue   = CALCULATE(SUM(retail[revenue]), retail[row_type] = "sale")
+Units Sold      = CALCULATE(SUM(retail[quantity]), retail[row_type] = "sale")
+Orders          = CALCULATE(DISTINCTCOUNT(retail[invoice]), retail[row_type] = "sale")
+Customers       = CALCULATE(DISTINCTCOUNTNOBLANK(retail[customer_id]), retail[row_type] = "sale")
+Products Sold   = CALCULATE(DISTINCTCOUNT(retail[stock_code]), retail[row_type] = "sale")
+Avg Order Value = DIVIDE([Sales Revenue], [Orders])
+Avg Unit Price  = DIVIDE([Sales Revenue], [Units Sold])
+
+// ---------- Measures: returns and net ----------
+Return Value       = -CALCULATE(SUM(retail[revenue]),  retail[row_type] = "cancellation")
+Units Returned     = -CALCULATE(SUM(retail[quantity]), retail[row_type] = "cancellation")
+Cancellation Lines = CALCULATE(COUNTROWS(retail), retail[row_type] = "cancellation")
+Return Rate        = DIVIDE(COALESCE([Return Value], 0), [Sales Revenue])
+Net Revenue        = [Sales Revenue] - [Return Value]
+Net Units          = [Units Sold] - [Units Returned]
+
+// ---------- Measures: shares and trends ----------
+UK Share = DIVIDE(
+    CALCULATE([Sales Revenue], retail[country] = "United Kingdom"),
+    CALCULATE([Sales Revenue], ALL(retail[country])))
+
+% of Net Revenue = DIVIDE([Net Revenue], CALCULATE([Net Revenue], ALLSELECTED(retail)))
+
+// Jan to Nov only, because December 2011 is partial
+Net Revenue 2011 = CALCULATE([Net Revenue], retail[invoice_year] = 2011, retail[invoice_month] <= 11)
+Net Revenue 2010 = CALCULATE([Net Revenue], retail[invoice_year] = 2010, retail[invoice_month] <= 11)
+Product YoY %    = DIVIDE([Net Revenue 2011] - [Net Revenue 2010], [Net Revenue 2010])
+
+// ---------- Measures: peaks ----------
+Peak Quarter =
+VAR q = CALCULATE(
+    SELECTEDVALUE(retail[invoice_quarter]),
+    TOPN(1, SUMMARIZE(retail, retail[invoice_quarter], "TotalQty", [Units Sold]), [TotalQty], DESC))
+RETURN IF(ISBLANK(q), BLANK(), "Q" & q)
+
+Peak Month = CALCULATE(
+    SELECTEDVALUE(retail[month_name]),
+    TOPN(1, SUMMARIZE(retail, retail[month_name], "TotalQty", [Units Sold]), [TotalQty], DESC))
+
+// ---------- Dynamic finding lines (chart subtitles) ----------
+Guest Note   = FORMAT(DIVIDE(CALCULATE([Sales Revenue], retail[Customer Type] = "Guest"), [Sales Revenue]), "0%") & " of revenue comes from guests"
+Weekend Note = "Weekends bring " & FORMAT(DIVIDE(CALCULATE([Sales Revenue], retail[Day Type] = "Weekend"), [Sales Revenue]), "0%") & " of revenue"
+
+// ---------- Check values (no slicers selected) ----------
+// Sales Revenue ~19.64M | Units Sold ~11.19M | Orders 39,516 | Customers 5,852
+// Products Sold 4,707 | Return Value ~716K | Return Rate ~3.65%
+// Cancellation Lines 17,914 | Net Revenue ~18.93M | UK Share ~85.5%
