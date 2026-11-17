@@ -50,17 +50,6 @@ Cancellation Lines = CALCULATE(COUNTROWS(retail), retail[row_type] = "cancellati
 Return Rate        = DIVIDE(COALESCE([Return Value], 0), [Sales Revenue])
 Net Revenue        = [Sales Revenue] - [Return Value]
 Net Units          = [Units Sold] - [Units Returned]
-
-// ---------- Measures: shares and trends ----------
-UK Share = DIVIDE(
-    CALCULATE([Sales Revenue], retail[country] = "United Kingdom"),
-    CALCULATE([Sales Revenue], ALL(retail[country])))
-
-% of Net Revenue = DIVIDE([Net Revenue], CALCULATE([Net Revenue], ALLSELECTED(retail)))
-
-// Jan to Nov only, because December 2011 is partial
-Net Revenue 2011 = CALCULATE([Net Revenue], retail[invoice_year] = 2011, retail[invoice_month] <= 11)
-Net Revenue 2010 = CALCULATE([Net Revenue], retail[invoice_year] = 2010, retail[invoice_month] <= 11)
 Product YoY %    = DIVIDE([Net Revenue 2011] - [Net Revenue 2010], [Net Revenue 2010])
 
 // ---------- Measures: peaks ----------
@@ -73,10 +62,6 @@ RETURN IF(ISBLANK(q), BLANK(), "Q" & q)
 Peak Month = CALCULATE(
     SELECTEDVALUE(retail[month_name]),
     TOPN(1, SUMMARIZE(retail, retail[month_name], "TotalQty", [Units Sold]), [TotalQty], DESC))
-
-// ---------- Dynamic finding lines (chart subtitles) ----------
-Guest Note   = FORMAT(DIVIDE(CALCULATE([Sales Revenue], retail[Customer Type] = "Guest"), [Sales Revenue]), "0%") & " of revenue comes from guests"
-Weekend Note = "Weekends bring " & FORMAT(DIVIDE(CALCULATE([Sales Revenue], retail[Day Type] = "Weekend"), [Sales Revenue]), "0%") & " of revenue"
 
 // ---------- Check values (no slicers selected) ----------
 // Sales Revenue ~19.64M | Units Sold ~11.19M | Orders 39,516 | Customers 5,852
