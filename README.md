@@ -13,7 +13,6 @@ I took 1M+ rows of raw UK online-retail transactions and built the whole pipelin
 
 ## Dashboard
 
-> Add your final screenshots to `images/` with these names.
 
 | | |
 |---|---|
