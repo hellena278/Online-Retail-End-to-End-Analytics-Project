@@ -127,4 +127,4 @@ python python/02_export_master_final.py
 
 ## Author
 
-**[Your name]** · [LinkedIn](https://www.linkedin.com/) · [Portfolio](https://)
+**[Nur Hidayah]** · [LinkedIn]([https://www.linkedin.com/](https://www.linkedin.com/in/nur-h-ab961821b/)) ·
